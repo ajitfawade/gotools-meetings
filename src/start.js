@@ -1,11 +1,12 @@
+import http from 'http';
 import express from 'express';
 import mongoose from 'mongoose';
 import path from 'path';
 import bodyParser from 'body-parser';
 import morgan from 'morgan';
-import passport from 'passport';                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
 import HttpStatus from 'http-status-codes';
 import { errors, isCelebrate } from 'celebrate';
+import xss from 'xss';
 
 // this is all it takes to enable async/await for express middleware
 import 'express-async-errors';
@@ -76,7 +77,8 @@ function startServer({ port = process.env.PORT } = {}) {
   // So this block of code allows us to start the express app and resolve the
   // promise with the express server
   return new Promise((resolve) => {
-    const server = app.listen(port, () => {
+    const server = http.createServer(app);
+    server.listen(port, () => {
       Logger.log('info', `Listening on port ${server.address().port}`);
       // this block of code turns `server.close` into a promise API
       const originalClose = server.close.bind(server);
@@ -97,7 +99,7 @@ function startServer({ port = process.env.PORT } = {}) {
 function errorMiddleware(error, req, res, next) {
   if (res.headersSent) {
     console.log('headers sent');
-    next(error);                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+    next(error);
   } else if (isCelebrate(err)) {
     console.log('celebrate error');
     return Response.fail(
